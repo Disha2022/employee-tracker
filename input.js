@@ -72,7 +72,6 @@ function mainQuestion() {
         const [departmentResults] = await connection.execute(
           "SELECT name FROM `department`"
         );
-        console.log(departmentResults);
         const departmentNames = departmentResults.map((res) => res.name);
         await inquirer
           .prompt([
@@ -109,6 +108,73 @@ function mainQuestion() {
               .catch((e) => console.log(e));
 
             console.log("Added " + answers.name + " to the database.");
+          });
+      }
+      if (answers.main === "Add an employee") {
+        const [roleResults] = await connection.execute(
+          "SELECT title FROM `role`"
+        );
+        const roleNames = roleResults.map((res) => res.title);
+
+        const [managerResults] = await connection.execute(
+          "SELECT first_name, last_name FROM `employee`"
+        );
+        const managerNames = managerResults.map(
+          (res) => res.first_name + " " + res.last_name
+        );
+        await inquirer
+          .prompt([
+            {
+              type: "input",
+              name: "name",
+              message: "What is first name of the employee?",
+            },
+            {
+              type: "input",
+              name: "lastName",
+              message: "What is last name of the employee?",
+            },
+            {
+              type: "list",
+              name: "role",
+              message: "What is the employee's role?",
+              choices: roleNames,
+            },
+            {
+              type: "list",
+              name: "manager",
+              message: "Who is the employee's manager?",
+              choices: managerNames,
+            },
+          ])
+          .then(async (answers) => {
+            const [results] = await connection
+              .execute("SELECT id FROM `role` WHERE `title` = ?", [
+                answers.role,
+              ])
+              .catch((e) => console.log(e));
+            const id = results[0].id;
+
+            const managerFirstName = answers.manager.split(" ")[0];
+            const managerLastName = answers.manager.split(" ")[1];
+            const [managerResults] = await connection
+              .execute(
+                "SELECT id FROM `employee` WHERE `first_name` = ? AND `last_name` = ?",
+                [managerFirstName, managerLastName]
+              )
+              .catch((e) => console.log(e));
+            const managerId = managerResults[0].id;
+            
+            await connection
+              .execute(
+                `INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`,
+                [answers.name, answers.lastName, id, managerId]
+              )
+              .catch((e) => console.log(e));
+
+            console.log(
+              `Added ${answers.name} ${answers.lastName} to the database.`
+            );
           });
       }
       mainQuestion();
