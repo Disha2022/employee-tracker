@@ -1,6 +1,8 @@
 var inquirer = require("inquirer");
 const mysql = require("mysql2");
 
+process.env.pw = process.env.pw || "";
+
 // create the connection to database
 const connection = mysql.createConnection({
   host: "localhost",
