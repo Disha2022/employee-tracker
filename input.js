@@ -41,10 +41,35 @@ function mainQuestion() {
       }
       if (answers.main === "View all roles") {
         const [rows] = await connection.execute(
-          "SELECT * FROM `role` INNER JOIN department ON role.department_id = department.id;"
+          "SELECT *, role.id as role_id FROM `role` INNER JOIN department ON role.department_id = department.id;"
         );
         const table = rows.map((row) => {
           delete row.department_id;
+
+          row.id = row.role_id;
+          delete row.role_id;
+          return row;
+        });
+        console.table(table);
+      }
+      if (answers.main === "View all employees") {
+        const [allEmployees] = await connection.execute(
+          "SELECT *, employee.id as employee_id FROM `employee` INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ;"
+        );
+
+        const table = allEmployees.map((row) => {
+          delete row.department_id;
+          delete row.role_id;
+          delete row.id;
+
+          row.department = row.name;
+          delete row.name;
+
+          const manager = allEmployees.find(
+            (employee) => employee.employee_id === row.manager_id
+          );
+          row.managerName = manager.first_name + " " + manager.last_name;
+          delete row.manager_id;
           return row;
         });
         console.table(table);
@@ -164,7 +189,7 @@ function mainQuestion() {
               )
               .catch((e) => console.log(e));
             const managerId = managerResults[0].id;
-            
+
             await connection
               .execute(
                 `INSERT INTO employee(first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`,
@@ -174,6 +199,55 @@ function mainQuestion() {
 
             console.log(
               `Added ${answers.name} ${answers.lastName} to the database.`
+            );
+          });
+      }
+      if (answers.main === "Update an employee") {
+        const [employeeResults] = await connection.execute(
+          "SELECT first_name, last_name FROM `employee`"
+        );
+        const employeeNames = employeeResults.map(
+          (res) => res.first_name + " " + res.last_name
+        );
+        const [roleResults] = await connection.execute(
+          "SELECT title FROM `role`"
+        );
+        const roleNames = roleResults.map((res) => res.title);
+
+        await inquirer
+          .prompt([
+            {
+              type: "list",
+              name: "name",
+              message: "What employee?",
+              choices: employeeNames,
+            },
+            {
+              type: "list",
+              name: "role",
+              message: "What is their new role?",
+              choices: roleNames,
+            },
+          ])
+          .then(async (answers) => {
+            const [results] = await connection
+              .execute("SELECT id FROM `role` WHERE `title` = ?", [
+                answers.role,
+              ])
+              .catch((e) => console.log(e));
+            const id = results[0].id;
+
+            const firstName = answers.name.split(" ")[0];
+            const lastName = answers.name.split(" ")[1];
+            await connection
+              .execute(
+                `UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?`,
+                [id, firstName, lastName]
+              )
+              .catch((e) => console.log(e));
+
+            console.log(
+              `Updated ${answers.name} ${answers.lastName} in the database.`
             );
           });
       }
