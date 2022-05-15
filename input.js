@@ -39,6 +39,16 @@ function mainQuestion() {
         );
         console.log(rows.map((department) => department.name));
       }
+      if (answers.main === "View all roles") {
+        const [rows] = await connection.execute(
+          "SELECT * FROM `role` INNER JOIN department ON role.department_id = department.id;"
+        );
+        const table = rows.map((row) => {
+          delete row.department_id;
+          return row;
+        });
+        console.table(table);
+      }
       if (answers.main === "Add a department") {
         await inquirer
           .prompt([
@@ -48,16 +58,22 @@ function mainQuestion() {
               message: "What is name of department?",
             },
           ])
-          .then((answers) => {
-            const [results] = await connection.execute(
-              `INSERT INTO department(name) VALUES ${answers.department}`)
-                console.log(
-                  "Added " + answers.department + " to the database."
-                );
+          .then(async (answers) => {
+            const [results] = await connection
+              .execute(`INSERT INTO department (name) VALUES(?)`, [
+                answers.department,
+              ])
+              .catch((e) => console.log(e));
+            console.log("Added " + answers.department + " to the database.");
           });
       }
 
       if (answers.main === "Add a role") {
+        const [departmentResults] = await connection.execute(
+          "SELECT name FROM `department`"
+        );
+        console.log(departmentResults);
+        const departmentNames = departmentResults.map((res) => res.name);
         await inquirer
           .prompt([
             {
@@ -71,24 +87,28 @@ function mainQuestion() {
               message: "What is salary of the role?",
             },
             {
-              type: "input",
+              type: "list",
               name: "department",
               message: "What department does the role belong to?",
+              choices: departmentNames,
             },
           ])
-          .then((answers) => {
-            let id;
-            const [results] = await connection.execute(
-              "SELECT id FROM `department` WHERE `name` = ?",
-              [answers.department]);
-                console.log(results);
+          .then(async (answers) => {
+            const [results] = await connection
+              .execute("SELECT id FROM `department` WHERE `name` = ?", [
+                answers.department,
+              ])
+              .catch((e) => console.log(e));
+            const id = results[0].id;
 
-            await connection.execute(
-              `INSERT INTO role(title, salary, department_id) VALUES ${answers.name}`,
-              "INSERT INTO department(name) VALUES ?, ? , ?",
-              [answers.name, answers.salary, id]);
+            await connection
+              .execute(
+                `INSERT INTO role(title, salary, department_id) VALUES (?,?,?)`,
+                [answers.name, answers.salary, id]
+              )
+              .catch((e) => console.log(e));
 
-                console.log("Added " + answers.name + " to the database.");
+            console.log("Added " + answers.name + " to the database.");
           });
       }
       mainQuestion();
