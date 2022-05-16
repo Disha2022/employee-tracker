@@ -38,12 +38,10 @@ function mainQuestion() {
     ])
     .then(async (answers) => {
       if (answers.main === "View all departments") {
-        const [rows] = await connection.execute(
-          "SELECT name FROM `department`"
-        );
+        const [rows] = await connection.execute("SELECT * FROM `department`");
         console.table(
           rows.map((department) => {
-            return { department: department.name };
+            return { department: department.name, id: department.id };
           })
         );
       }
@@ -53,6 +51,9 @@ function mainQuestion() {
         );
         const table = rows.map((row) => {
           delete row.department_id;
+
+          row.department = row.name;
+          delete row.name;
 
           row.id = row.role_id;
           delete row.role_id;
