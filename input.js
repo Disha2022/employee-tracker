@@ -10,7 +10,7 @@ async function init() {
     user: "root",
     database: "employee_db",
     password: process.env.pw,
-  });
+  }).catch((e) => console.log(e));
   mainQuestion();
 }
 
@@ -38,7 +38,7 @@ function mainQuestion() {
         const [rows] = await connection.execute(
           "SELECT name FROM `department`"
         );
-        console.log(rows.map((department) => department.name));
+        console.table(rows.map((department) => department.name));
       }
       if (answers.main === "View all roles") {
         const [rows] = await connection.execute(
@@ -308,6 +308,7 @@ function mainQuestion() {
       mainQuestion();
     })
     .catch((error) => {
+      console.log(error);
       if (error.isTtyError) {
         // Prompt couldn't be rendered in the current environment
       } else {
