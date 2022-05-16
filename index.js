@@ -1,16 +1,19 @@
 var inquirer = require("inquirer");
 const mysql = require("mysql2/promise");
+const cTable = require("console.table");
 
 // create the connection to database
 process.env.pw = process.env.pw || "";
 let connection;
 async function init() {
-  connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    database: "employee_db",
-    password: process.env.pw,
-  }).catch((e) => console.log(e));
+  connection = await mysql
+    .createConnection({
+      host: "localhost",
+      user: "root",
+      database: "employee_db",
+      password: process.env.pw,
+    })
+    .catch((e) => console.log(e));
   mainQuestion();
 }
 
@@ -29,7 +32,7 @@ function mainQuestion() {
           "Add a role",
           "Add an employee",
           "Update employee role",
-          "Update employee manager"
+          "Update employee manager",
         ],
       },
     ])
@@ -38,7 +41,11 @@ function mainQuestion() {
         const [rows] = await connection.execute(
           "SELECT name FROM `department`"
         );
-        console.table(rows.map((department) => department.name));
+        console.table(
+          rows.map((department) => {
+            return { department: department.name };
+          })
+        );
       }
       if (answers.main === "View all roles") {
         const [rows] = await connection.execute(
@@ -227,7 +234,7 @@ function mainQuestion() {
               name: "role",
               message: "What is their new role?",
               choices: roleNames,
-            }
+            },
           ])
           .then(async (answers) => {
             const [results] = await connection
