@@ -21,6 +21,10 @@
 ## Installation
 
 npm install
+mysql -u root -p
+source db/db.sql
+source db/schema.sql
+source db/seeds.sql
 
 ## Usage
 
@@ -28,7 +32,11 @@ node index.js
 
 OR
 
-pw={sql_pw} node index.js
+pw={insert your mySql password here} node index.js
+
+## Demo
+
+![employee-tracker Demo Gif.](./images/demo.gif)
 
 ## Contributing Guidelines
 
