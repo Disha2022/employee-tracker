@@ -14,9 +14,11 @@ async function init() {
       password: process.env.pw,
     })
     .catch((e) => console.log(e));
+  // start the question loop after database is connected
   mainQuestion();
 }
 
+// recursive function that does not stop until user hits ctrl+c
 function mainQuestion() {
   return inquirer
     .prompt([
@@ -313,6 +315,7 @@ function mainQuestion() {
             );
           });
       }
+      // Ask user again regardless of user choice.
       mainQuestion();
     })
     .catch((error) => {
