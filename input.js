@@ -28,7 +28,8 @@ function mainQuestion() {
           "Add a department",
           "Add a role",
           "Add an employee",
-          "Update an employee role",
+          "Update employee role",
+          "Update employee manager"
         ],
       },
     ])
@@ -92,7 +93,6 @@ function mainQuestion() {
             console.log("Added " + answers.department + " to the database.");
           });
       }
-
       if (answers.main === "Add a role") {
         const [departmentResults] = await connection.execute(
           "SELECT name FROM `department`"
@@ -202,7 +202,7 @@ function mainQuestion() {
             );
           });
       }
-      if (answers.main === "Update an employee") {
+      if (answers.main === "Update employee role") {
         const [employeeResults] = await connection.execute(
           "SELECT first_name, last_name FROM `employee`"
         );
@@ -227,7 +227,7 @@ function mainQuestion() {
               name: "role",
               message: "What is their new role?",
               choices: roleNames,
-            },
+            }
           ])
           .then(async (answers) => {
             const [results] = await connection
@@ -247,7 +247,61 @@ function mainQuestion() {
               .catch((e) => console.log(e));
 
             console.log(
-              `Updated ${answers.name} ${answers.lastName} in the database.`
+              `Updated ${answers.name} ${answers.lastName} role in the database.`
+            );
+          });
+      }
+      if (answers.main === "Update employee manager") {
+        const [employeeResults] = await connection.execute(
+          "SELECT first_name, last_name FROM `employee`"
+        );
+        const employeeNames = employeeResults.map(
+          (res) => res.first_name + " " + res.last_name
+        );
+
+        const [managerResults] = await connection.execute(
+          "SELECT first_name, last_name FROM `employee`"
+        );
+        const managerNames = managerResults.map(
+          (res) => res.first_name + " " + res.last_name
+        );
+        await inquirer
+          .prompt([
+            {
+              type: "list",
+              name: "name",
+              message: "What employee?",
+              choices: employeeNames,
+            },
+            {
+              type: "list",
+              name: "role",
+              message: "Who is their new manager?",
+              choices: managerNames,
+            },
+          ])
+          .then(async (answers) => {
+            const managerFirstName = answers.manager.split(" ")[0];
+            const managerLastName = answers.manager.split(" ")[1];
+            const [managerResults] = await connection
+              .execute(
+                "SELECT id FROM `employee` WHERE `first_name` = ? AND `last_name` = ?",
+                [managerFirstName, managerLastName]
+              )
+              .catch((e) => console.log(e));
+            const managerId = managerResults[0].id;
+
+            const firstName = answers.name.split(" ")[0];
+            const lastName = answers.name.split(" ")[1];
+            await connection
+              .execute(
+                `UPDATE employee SET manager_id = ? WHERE first_name = ? AND last_name = ?`,
+                [managerId, firstName, lastName]
+              )
+              .catch((e) => console.log(e));
+
+            console.log(
+              `Updated ${answers.name} ${answers.lastName} manager in the database.`
             );
           });
       }
