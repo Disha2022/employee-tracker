@@ -2,9 +2,9 @@
   "name": "employee-tracker",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node input.js",
+    "start": "node index.js",
     "test": "jest"
   },
   "repository": {
